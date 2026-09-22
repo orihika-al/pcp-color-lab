@@ -9,13 +9,20 @@ async function check(){
  const result=await new Promise(resolve=>{const timeout=setTimeout(()=>{channel.port1.close();resolve(false);},5000);channel.port1.onmessage=e=>{clearTimeout(timeout);channel.port1.close();resolve(e.data?.ready===true);};worker.postMessage({type:'CHECK_READY'},[channel.port2]);});
  ready=result;retry.hidden=result;if(result)paint();else fail();
 }
-function showUpdate(){if(registration?.waiting)panel.hidden=false;}
+async function showUpdate(){
+ const current=await navigator.serviceWorker.getRegistration();
+ if(current?.waiting){panel.hidden=false;return;}
+ // 'installed' can fire before registration.waiting has been assigned.
+ if(registration?.installing?.state==='installed')setTimeout(showUpdate,250);
+}
+function watch(worker){if(!worker)return;worker.addEventListener('statechange',()=>{if(worker.state==='installed'){showUpdate();setTimeout(showUpdate,500);}if(worker.state==='redundant'&&!ready)fail();});}
+
 async function start(){
  if(!('serviceWorker' in navigator)||!window.isSecureContext){status.textContent='オフライン保存にはHTTPSの公開URLをSafariまたはChromeで開いてください。';return;}
  try{
   registration=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
   showUpdate();
-  registration.addEventListener('updatefound',()=>{const worker=registration.installing;worker?.addEventListener('statechange',()=>{if(worker.state==='installed')showUpdate();if(worker.state==='redundant'&&!ready)fail();});});
+  watch(registration.installing);registration.addEventListener('updatefound',()=>watch(registration.installing));setTimeout(showUpdate,1000);setTimeout(showUpdate,3000);
   // Do not claim readiness until every required asset is in the active cache.
   navigator.serviceWorker.ready.then(()=>check());
   if(navigator.serviceWorker.controller)await check();

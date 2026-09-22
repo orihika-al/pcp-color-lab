@@ -1,0 +1,21 @@
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123e48"><title>PCP Color Labを更新</title><style>*{box-sizing:border-box}body{margin:0;background:#f0f5f7;color:#123e48;font:16px/1.7 -apple-system,BlinkMacSystemFont,sans-serif}main{max-width:460px;padding:32px 24px;margin:8vh auto}h1{font-size:24px}button,a{display:block;padding:14px 18px;border:0;border-radius:10px;background:#146572;color:white;font:inherit;text-align:center;text-decoration:none;width:100%;margin-top:20px}button:disabled{opacity:.6}.note{font-size:14px;color:#586d76}[hidden]{display:none}#status{font-size:14px}</style></head><body><main><p>PCP Color Lab</p><h1>写真を中心にした<br>新しい画面へ</h1><p>「測定・色の詳細・使い方」の3タブに切り替えます。</p><p class="note">オンラインで実行してください。現在の解析結果は保存されません。写真の外部送信はありません。</p><button id="update">最新版に切り替える</button><p id="status" role="status" aria-live="polite"></p><a id="open" href="./" hidden>新しい画面を開く</a></main><script>
+const button=document.getElementById('update'),status=document.getElementById('status');
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+async function version(worker){if(!worker)return null;return new Promise(resolve=>{const ch=new MessageChannel();const timeout=setTimeout(()=>{ch.port1.close();resolve(null)},1500);ch.port1.onmessage=e=>{clearTimeout(timeout);ch.port1.close();resolve(e.data)};worker.postMessage({type:'CHECK_READY'},[ch.port2]);});}
+button.addEventListener('click',async()=>{
+ button.disabled=true;status.textContent='最新の画面を読み込んでいます…';
+ try{
+ if(!navigator.onLine)throw new Error('ネットに接続してから、もう一度お試しください。');
+ if(!('serviceWorker' in navigator)){location.replace('./');return;}
+ const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});await reg.update();
+ for(let i=0;i<80;i++){
+  const current=await navigator.serviceWorker.getRegistration();
+  if(current?.waiting)current.waiting.postMessage({type:'APPLY_UPDATE'});
+  const state=await version(current?.active);
+  if(state?.ready&&state.version==='pcp-github-v3'){status.textContent='更新完了。新しい画面を開きます。';document.getElementById('open').hidden=false;location.replace('./');return;}
+  await pause(400);
+ }
+ throw new Error('更新を完了できませんでした。ネット接続を確認して、もう一度お試しください。');
+ }catch(e){status.textContent=e.message||'更新できませんでした。もう一度お試しください。';button.disabled=false;}
+});
+</script></body></html>
