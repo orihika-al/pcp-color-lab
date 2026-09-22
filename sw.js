@@ -1,6 +1,6 @@
 /* Bump VERSION whenever ANY app-shell asset changes. Only app files are cached;
    login pages, user photos and arbitrary requests must never enter this cache. */
-const VERSION='pcp-github-v1';
+const VERSION='pcp-github-v2';
 const CACHE='pcp-color-lab-'+VERSION;
 const BASE=new URL('./',self.location.href);
 const FILES=['./','style.css','color.js','calibration.js','app.js','pwa.js','favicon.svg','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'];
