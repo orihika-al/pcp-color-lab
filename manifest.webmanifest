@@ -1,0 +1,26 @@
+{
+  "id": "./",
+  "name": "PCP Color Lab",
+  "short_name": "PCP Color Lab",
+  "lang": "ja",
+  "description": "PhotonicCrystalPolymerの画像比色・未校正プロトタイプ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f2f6f8",
+  "theme_color": "#123e48",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
