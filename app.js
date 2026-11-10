@@ -10,12 +10,15 @@ function update(){
  rect={x,y,w:side,h:side};
  ctx.clearRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0);
  positionSelection();
- const a=PCPColor.analyze(sc.getImageData(x,y,side,side).data),e=PCPCalibration.estimate(a.intensity);
+ const a=PCPColor.analyze(sc.getImageData(x,y,side,side).data),e=PCPCalibration.estimate(a.lab);
  $('rgb').textContent=a.rgb.map(v=>v.toFixed(1)).join(' / ');$('hsv').textContent=a.hsv.map((v,i)=>v===null?'—':v.toFixed(1)+(i===0?'°':'%')).join(' / ');$('lab').textContent=a.lab.map(v=>v.toFixed(1)).join(' / ');
  $('swatch').style.background=`rgb(${a.rgb.join(',')})`;
  $('intensity').textContent=a.intensity.toFixed(3);$('strength').value=a.intensity;
  $('concentration').textContent=e.value===null?'—':e.value.toFixed(2);
- $('estimate-note').textContent=e.value===null?'仮の検量線の範囲外です（外挿しません）。':'選択範囲から算出した仮の換算値';
+ $('estimate-note').textContent=e.value===null?'色見本と色が離れているため比較できません。':e.endpoint?'最も近い色見本 · 範囲外・無色の判別はできません':e.boundary?'色見本の境界付近 · 近い方の段階を表示':'5段階の色見本で最も近い値';
+ $('reference-distance').textContent=e.distance===null?'—':e.distance.toFixed(1);
+ $('reference-note').textContent=e.value===null?'見本と異なる色です。照明・撮影範囲を確認してください。':'画像由来の参考比較です。実際の濃度を保証するものではありません。';
+ document.querySelectorAll('.reference-item').forEach((el,i)=>{const active=e.value!==null&&i===e.index;el.classList.toggle('is-match',active);el.querySelector('.match-label').textContent=active?'近い色':'';});
  $('size-value').textContent=$('size').value+'%';$('dimensions').textContent=`ROI ${side} × ${side} px · ${a.count.toLocaleString()}画素 · 位置 (${x}, ${y})`;
  $('quality').textContent=a.clipped>.1?'白飛び・黒つぶれの可能性があります。露出と測定領域を確認してください。':a.std>25?'領域内の色にばらつきがあります。容器の縁や反射を避けてください。':'色解析完了。撮影条件による色の変化は補正していません。';
 }
@@ -37,7 +40,9 @@ async function load(file){
  finally{URL.revokeObjectURL(url);}
 }
 ['upload','camera'].forEach(id=>$(id).addEventListener('change',e=>{load(e.target.files[0]);e.target.value='';}));
-$('demo').addEventListener('click',()=>{requestId++;$('sample-label').hidden=false;const c=document.createElement('canvas');c.width=1000;c.height=700;const d=c.getContext('2d');d.fillStyle='#f2f4f5';d.fillRect(0,0,1000,700);d.fillStyle='rgb(230,150,190)';d.fillRect(150,80,700,540);display(c,'サンプル画像（人工の色見本・実測試料ではありません）');});
+const referenceList=$('reference-list');
+PCPCalibration.config.references.forEach(ref=>{const item=document.createElement('div');item.className='reference-item';const chip=document.createElement('div');chip.className='reference-chip';chip.style.background=`rgb(${ref.rgb.join(',')})`;const label=document.createElement('strong');label.textContent=ref.value.toFixed(2);const match=document.createElement('span');match.className='match-label';item.append(chip,label,match);referenceList.append(item);});
+$('demo').addEventListener('click',()=>{requestId++;$('sample-label').hidden=false;const c=document.createElement('canvas');c.width=1000;c.height=700;const d=c.getContext('2d');d.fillStyle='#f2f4f5';d.fillRect(0,0,1000,700);d.fillStyle=`rgb(${PCPCalibration.config.references[2].rgb.join(',')})`;d.fillRect(150,80,700,540);display(c,'0.50 mg/Lの色見本から作ったサンプル（実測試料ではありません）');});
 $('size').addEventListener('input',update);$('center').addEventListener('click',()=>{cx=cy=.5;update();});
 function imageBox(){const bounds=canvas.getBoundingClientRect(),stage=$('drop-zone').getBoundingClientRect();const scale=Math.min(bounds.width/source.width,bounds.height/source.height);return {scale,left:bounds.left+(bounds.width-source.width*scale)/2,top:bounds.top+(bounds.height-source.height*scale)/2,stage};}
 function positionSelection(){if(!rect||$('measure').hidden)return;const b=imageBox();if(!b.scale)return;Object.assign($('roi-selection').style,{left:(b.left-b.stage.left+rect.x*b.scale)+'px',top:(b.top-b.stage.top+rect.y*b.scale)+'px',width:(rect.w*b.scale)+'px',height:(rect.h*b.scale)+'px'});}
