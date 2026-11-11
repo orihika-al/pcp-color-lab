@@ -1,30 +1,15 @@
 # PCP Color Lab
 
-PhotonicCrystalPolymerの画像比色プロトタイプ。濃度表示は未校正のデモ値です。
+Buildless browser-local DPD liquid photo analysis; GitHub Pages main/root.
 
-## 使い方
+## 2026-11-11: user-assigned three-point liquid calibration
 
-- 測定：写真を撮る／写真を選ぶ → 写真上で範囲を合わせる → 仮の残留塩素濃度を確認。
-- 測定範囲は写真上の枠をドラッグして移動、右下のハンドルをドラッグして拡大縮小。写真上の＋／−でも調整可能。
-- 色の詳細：平均RGB、HSV、Lab、強度指標、画像・選択範囲の情報。
-- 使い方：操作説明、ホーム画面への追加、オフライン準備状態、更新、解析方法。
+The user supplied a 443x110 composite and assigned left/centre/right values of 0.2, 0.6, 2.0 ppm. This is an image-reference fit, not independent validation of concentration. The original photograph is not included in the public app. `calibration.js` records RGB medians, source ROIs, and saturation fractions. The unchanged private draft from the earlier photo-card comparison task remains separate.
 
-写真・解析結果を外部に送信／永続保存する処理はありません。再読み込み・更新で現在の写真・結果は消えます。
+`liquid.js` detects connected pink regions with vertical aspect ratio, searches the upper body for a uniform bright patch, and excludes near-white/near-black pixels. The source image is reduced only above 1600 px. Multiple candidates are presented left-to-right; all ROIs are manually adjustable. No image identity, filename, hash, or ordinal selects a concentration. ROI color alone determines the result.
 
-## オフライン
+Median sRGB is divided by its maximum channel and scaled to 255; three reference vectors are linked by piecewise-linear segments. Nearest-segment projection determines interpolation. Outside endpoints and normalized RGB distance >12 are rejected. The distance threshold is heuristic, not an accuracy bound. A sample needs at least 9 valid pixels, less than 25% white/black clipping and median RGB spread <35. Red-channel saturation is retained (also present in two calibration photos) but visibly flagged. This limits generalization.
 
-HTTPSで一度オンライン起動し、使い方タブの「オフライン準備完了」を確認します。ホーム画面へ追加した場合は、そのアイコンからオンラインで一度起動し直して確認してください。
+Photos are processed only in the browser. No user photo is sent or persisted. UI shows reference values, saturation/low-resolution limitations, and unvalidated accuracy. The synthetic demo uses the middle reference color.
 
-## 開発・更新
-
-ビルド不要のHTML/CSS/JavaScript。GitHub Pagesのmain / (root)で配信できます。
-ファイルの更新時にはsw.jsのVERSIONとindex.htmlのpcp-shellメタを同じ新しい値に変更してください。検量線はcalibration.jsに分離しています。
-
-2026-09-22：写真優先の3タブUIに変更。ローカルChromeで320/375/390/430pxの縦画面、写真上の範囲サイズ変更、タブ間の結果維持、オフライン再起動・解析を確認。実機カメラでの確認は未実施です。
-
-## DPD色見本による参考比較（2026-11-10）
-
-提供画像の5色をcalibration.jsに定義。RGB: 0.05=[254,237,242]、0.20=[250,213,230]、0.50=[241,171,201]、1.00=[236,122,170]、2.00=[230,87,149]。原画像725×352pxの各50×100px内側領域から抽出した最頻値です。
-平均sRGBを3次元ベクトルとして扱い、隣接する基準RGBを結んだ線分に最小二乗射影します。線分内の位置比率で濃度を区分線形補間（R/G/Bは等重み）。0.05〜2.00 mg/Lの範囲外は外挿せず表示を抑止。補間RGBからの距離が30を超える場合も表示を抑止します（未検証の暫定しきい値）。表示値は小数第2位に丸めますが測定精度を示すものではありません。
-
-化学的校正ではなくデジタル画像の近似です。実測濃度や安全性の判定には利用できません。サンプルは0.20/0.50の中間RGBで、約0.35 mg/Lになります。
+Bump the shell marker and service worker VERSION together on every deployment. All app files, including liquid.js, are pre-cached for offline use. `update.html` clears this app's old cache and returns to the app.

@@ -1,21 +1,17 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123e48"><title>PCP Color Labを更新</title><style>*{box-sizing:border-box}body{margin:0;background:#f0f5f7;color:#123e48;font:16px/1.7 -apple-system,BlinkMacSystemFont,sans-serif}main{max-width:460px;padding:32px 24px;margin:8vh auto}h1{font-size:24px}button,a{display:block;padding:14px 18px;border:0;border-radius:10px;background:#146572;color:white;font:inherit;text-align:center;text-decoration:none;width:100%;margin-top:20px}button:disabled{opacity:.6}.note{font-size:14px;color:#586d76}[hidden]{display:none}#status{font-size:14px}</style></head><body><main><p>PCP Color Lab</p><h1>DPDの色見本を使う<br>新しい比較機能へ</h1><p>色見本のRGBから濃度を補間する最新版に切り替えます。</p><p class="note">オンラインで実行してください。現在の解析結果は保存されません。写真の外部送信はありません。</p><button id="update">最新版に切り替える</button><p id="status" role="status" aria-live="polite"></p><a id="open" href="./" hidden>新しい画面を開く</a></main><script>
+<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#123e48"><title>PCP Color Labを更新</title><style>*{box-sizing:border-box}body{margin:0;background:#f0f5f7;color:#123e48;font:16px/1.7 -apple-system,BlinkMacSystemFont,sans-serif}main{max-width:460px;padding:32px 24px;margin:8vh auto}h1{font-size:24px}button,a{display:block;padding:14px 18px;border:0;border-radius:10px;background:#146572;color:white;font:inherit;text-align:center;text-decoration:none;width:100%;margin-top:20px}button:disabled{opacity:.6}.note{font-size:14px;color:#586d76}[hidden]{display:none}#status{font-size:14px}</style></head><body><main><p>PCP Color Lab</p><h1>DPD溶液の写真を使う<br>3点の基準による推定へ</h1><p>0.2・0.6・2.0 ppmの基準写真から濃度を推定する最新版に切り替えます。</p><p class="note">オンラインで実行してください。現在の解析結果は保存されません。写真の外部送信はありません。</p><button id="update">最新版に切り替える</button><p id="status" role="status" aria-live="polite"></p><a id="open" href="./" hidden>新しい画面を開く</a></main><script>
 const button=document.getElementById('update'),status=document.getElementById('status');
-const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-async function version(worker){if(!worker)return null;return new Promise(resolve=>{const ch=new MessageChannel();const timeout=setTimeout(()=>{ch.port1.close();resolve(null)},1500);ch.port1.onmessage=e=>{clearTimeout(timeout);ch.port1.close();resolve(e.data)};worker.postMessage({type:'CHECK_READY'},[ch.port2]);});}
 button.addEventListener('click',async()=>{
  button.disabled=true;status.textContent='最新の画面を読み込んでいます…';
  try{
- if(!navigator.onLine)throw new Error('ネットに接続してから、もう一度お試しください。');
- if(!('serviceWorker' in navigator)){location.replace('./');return;}
- const reg=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});await reg.update();
- for(let i=0;i<80;i++){
-  const current=await navigator.serviceWorker.getRegistration();
-  if(current?.waiting)current.waiting.postMessage({type:'APPLY_UPDATE'});
-  const state=await version(current?.active);
-  if(state?.ready&&state.version==='pcp-github-v5'){status.textContent='更新完了。新しい画面を開きます。';document.getElementById('open').hidden=false;location.replace('./');return;}
-  await pause(400);
- }
- throw new Error('更新を完了できませんでした。ネット接続を確認して、もう一度お試しください。');
+  if(!navigator.onLine)throw new Error('ネットに接続してから、もう一度お試しください。');
+  const base=new URL('./',location.href),target=new URL('./',base);target.searchParams.set('v','pcp-github-v7-liquid3-r1');
+  // Probe a distinct static filename: old navigation handlers cannot substitute the shell.
+  const probe=new URL('index.html',base);probe.searchParams.set('check',String(Date.now()));
+  const response=await fetch(probe,{cache:'no-store'});const html=await response.text();
+  if(!response.ok||!html.includes('pcp-github-v7-liquid3-r1'))throw new Error('公開版の更新準備中です。少し待ってから再度お試しください。');
+  if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration(base.href);if(reg&&reg.scope===base.href)await reg.unregister();}
+  if('caches' in window)await Promise.all((await caches.keys()).filter(k=>k.startsWith('pcp-color-lab-')).map(k=>caches.delete(k)));
+  status.textContent='更新完了。新しい画面を開きます。';const link=document.getElementById('open');link.href=target.href;link.hidden=false;location.replace(target.href);
  }catch(e){status.textContent=e.message||'更新できませんでした。もう一度お試しください。';button.disabled=false;}
 });
 </script></body></html>

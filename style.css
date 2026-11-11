@@ -3,3 +3,8 @@
 .reference-list{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px;margin-top:16px}.reference-item{text-align:center;font-size:14px;min-width:0;border:2px solid transparent;border-radius:9px;padding:3px}.reference-chip{height:70px;border:1px solid #e4dce2;border-radius:5px;margin-bottom:5px}.reference-item.is-match{border-color:var(--teal)}.match-label{display:block;height:20px;font-size:11px;color:var(--teal)}
 
 .rgb-table summary{cursor:pointer;min-height:44px;padding:10px 0;font-size:14px}.rgb-table table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}.rgb-table th,.rgb-table td{padding:8px;text-align:right;border-bottom:1px solid var(--line)}
+
+
+.sample-picker{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}.sample-picker button{padding:10px 14px;border:1px solid #b9cdcf;border-radius:8px;background:#fff;color:#123e48;font:inherit;cursor:pointer}#liquid-candidates{display:flex;gap:8px;flex-wrap:wrap}#liquid-candidates button[aria-pressed="true"]{background:#123e48;color:white}.reference-list{grid-template-columns:repeat(3,1fr)}
+
+@media(min-width:800px){.sample-picker{grid-column:2;grid-row:3}.photo-card{grid-row:1/4}}

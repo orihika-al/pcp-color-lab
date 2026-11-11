@@ -1,42 +1,27 @@
-/* Image-derived references, NOT a chemical calibration.
- * Source: user-supplied 725x352 DPD chart, received 2026-11-10.
- * RGB = mode of each 50x100px interior crop (no text/borders).
- * Crop centers x=100,215,335,450,565; y=130..229.
- * All 5000 pixels per crop had the listed RGB in the supplied PNG.
- * Values describe the supplied digital image, not certified liquid standards.
+/* User-assigned liquid photo references, 2026-11-11.
+ * Source: 443 x 110 composite, left/centre/right = 0.2/0.6/2.0 ppm.
+ * Liquid ROIs are auto-detected; component-wise medians exclude white/black clipping.
+ * Some red-channel pixels saturate. This is a 3-point image fit, not independently
+ * validated chemical calibration. Photos are not embedded or uploaded.
  */
-(function(root){
-  const config=Object.freeze({
-    id:'dpd-image-rgb-interpolation-v1',calibrated:false,method:'piecewise-linear-sRGB-projection',
-    // Euclidean RGB distance (0..255/channel); heuristic, not validated accuracy.
-    maxRGBDistance:30,
-    references:Object.freeze([
-      {value:0.05,rgb:[254,237,242]},
-      {value:0.20,rgb:[250,213,230]},
-      {value:0.50,rgb:[241,171,201]},
-      {value:1.00,rgb:[236,122,170]},
-      {value:2.00,rgb:[230,87,149]}
-    ].map(p=>Object.freeze({...p,rgb:Object.freeze(p.rgb)})))
-  });
-  function estimate(rgb,model=config){
-    const invalid={value:null,status:'invalid',distance:null};
-    const validRGB=p=>Array.isArray(p)&&p.length===3&&p.every(v=>Number.isFinite(v)&&v>=0&&v<=255);
-    const refs=model?.references;
-    if(!validRGB(rgb)||!Array.isArray(refs)||refs.length<2||!Number.isFinite(model.maxRGBDistance)||model.maxRGBDistance<0)return invalid;
-    if(refs.some((p,i)=>!validRGB(p.rgb)||!Number.isFinite(p.value)||(i>0&&p.value<=refs[i-1].value)))return invalid;
-    let best=null;
-    for(let i=0;i<refs.length-1;i++){
-      const a=refs[i],b=refs[i+1],direction=b.rgb.map((v,k)=>v-a.rgb[k]);
-      const norm=direction.reduce((sum,v)=>sum+v*v,0);if(!norm)return invalid;
-      const raw=direction.reduce((sum,v,k)=>sum+(rgb[k]-a.rgb[k])*v,0)/norm;
-      const fraction=Math.max(0,Math.min(1,raw));
-      const fittedRGB=a.rgb.map((v,k)=>v+fraction*direction[k]);
-      const distance=Math.hypot(...rgb.map((v,k)=>v-fittedRGB[k]));
-      if(!best||distance<best.distance)best={distance,raw,fraction,lowerIndex:i,upperIndex:i+1,fittedRGB,value:a.value+fraction*(b.value-a.value)};
-    }
-    if(best.distance>model.maxRGBDistance)return {...best,value:null,status:'color-mismatch'};
-    if((best.lowerIndex===0&&best.raw < -1e-9)||(best.upperIndex===refs.length-1&&best.raw>1+1e-9))return {...best,value:null,status:'outside-reference'};
-    return {...best,status:'image-approximation'};
+(function(root){'use strict';
+ const config=Object.freeze({id:'dpd-liquid-3point-20261111',calibrated:false,method:'normalized-sRGB-piecewise-projection',maxRGBDistance:12,references:Object.freeze([{"value": 0.2, "rgb": [243, 185, 207], "roi": {"x": 69, "y": 72, "w": 5, "h": 5}, "saturated": 0}, {"value": 0.6, "rgb": [255, 154, 201], "roi": {"x": 225, "y": 78, "w": 5, "h": 5}, "saturated": 0.84}, {"value": 2, "rgb": [254, 119, 169], "roi": {"x": 369, "y": 70, "w": 5, "h": 5}, "saturated": 0.56}].map(p=>Object.freeze({...p,rgb:Object.freeze(p.rgb),roi:Object.freeze(p.roi)})))});
+ const feature=rgb=>rgb.map(v=>v/Math.max(...rgb)*255);
+ function estimate(rgb,model=config){
+  const invalid={value:null,status:'invalid',distance:null};
+  const valid=p=>Array.isArray(p)&&p.length===3&&p.every(v=>Number.isFinite(v)&&v>=0&&v<=255)&&Math.max(...p)>20;
+  if(!valid(rgb)||!model||!Array.isArray(model.references)||model.references.length<2||!Number.isFinite(model.maxRGBDistance))return invalid;
+  const refs=model.references;if(refs.some((p,i)=>!valid(p.rgb)||!Number.isFinite(p.value)||(i&&p.value<=refs[i-1].value)))return invalid;
+  const q=feature(rgb);let best=null;
+  for(let i=0;i<refs.length-1;i++){
+   const a=feature(refs[i].rgb),b=feature(refs[i+1].rgb),d=b.map((v,k)=>v-a[k]),norm=d.reduce((s,v)=>s+v*v,0);if(norm<1e-9)return invalid;
+   const raw=d.reduce((s,v,k)=>s+v*(q[k]-a[k]),0)/norm,t=Math.max(0,Math.min(1,raw)),fit=a.map((v,k)=>v+t*d[k]),distance=Math.hypot(...q.map((v,k)=>v-fit[k]));
+   if(!best||distance<best.distance)best={distance,raw,fraction:t,lowerIndex:i,upperIndex:i+1,value:refs[i].value+t*(refs[i+1].value-refs[i].value)};
   }
-  root.PCPCalibration={config,estimate};
+  if(best.distance>model.maxRGBDistance)return {...best,value:null,status:'color-mismatch'};
+  if((best.lowerIndex===0&&best.raw< -1e-9)||(best.upperIndex===refs.length-1&&best.raw>1+1e-9))return {...best,value:null,status:'outside-reference'};
+  return {...best,status:'photo-reference'};
+ }
+ root.PCPCalibration={config,estimate,feature};
+ if(typeof module!=='undefined')module.exports=root.PCPCalibration;
 })(globalThis);

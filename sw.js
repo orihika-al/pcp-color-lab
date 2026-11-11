@@ -1,9 +1,9 @@
 /* Bump VERSION whenever ANY app-shell asset changes. Only app files are cached;
    login pages, user photos and arbitrary requests must never enter this cache. */
-const VERSION='pcp-github-v5';
+const VERSION='pcp-github-v7-liquid3-r1';
 const CACHE='pcp-color-lab-'+VERSION;
 const BASE=new URL('./',self.location.href);
-const FILES=['./','style.css','color.js','calibration.js','app.js','pwa.js','favicon.svg','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'];
+const FILES=['./','style.css','color.js','calibration.js','liquid.js','app.js','pwa.js','favicon.svg','manifest.webmanifest','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png'];
 const URLS=FILES.map(p=>new URL(p,BASE).href);
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const entries=await Promise.all(URLS.map(async url=>{
@@ -39,3 +39,4 @@ self.addEventListener('fetch',event=>{
  if(!URLS.includes(key))return;
  event.respondWith((async()=>{const hit=await (await caches.open(CACHE)).match(key);return hit||fetch(request);})());
 });
+
