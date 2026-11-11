@@ -1,11 +1,11 @@
-/* User-assigned liquid photo references, 2026-11-11.
- * Source: 443 x 110 composite, left/centre/right = 0.2/0.6/2.0 ppm.
- * Liquid ROIs are auto-detected; component-wise medians exclude white/black clipping.
- * Some red-channel pixels saturate. This is a 3-point image fit, not independently
- * validated chemical calibration. Photos are not embedded or uploaded.
+/* User-assigned ORIGINAL liquid photo references, 2026-11-11.
+ * IMG_3868.JPG = 0.2 ppm, IMG_3867.JPG = 0.6 ppm, IMG_3866.JPG = 2.0 ppm.
+ * 4032x3024 originals decoded by browser, resized to 1600x1200 sRGB canvas.
+ * RGB is the component median of auto-detected liquid ROI, not a filename match.
+ * Replaces the previous 443x110 montage references. Not independently validated.
  */
 (function(root){'use strict';
- const config=Object.freeze({id:'dpd-liquid-3point-20261111',calibrated:false,method:'normalized-sRGB-piecewise-projection',maxRGBDistance:12,references:Object.freeze([{"value": 0.2, "rgb": [243, 185, 207], "roi": {"x": 69, "y": 72, "w": 5, "h": 5}, "saturated": 0}, {"value": 0.6, "rgb": [255, 154, 201], "roi": {"x": 225, "y": 78, "w": 5, "h": 5}, "saturated": 0.84}, {"value": 2, "rgb": [254, 119, 169], "roi": {"x": 369, "y": 70, "w": 5, "h": 5}, "saturated": 0.56}].map(p=>Object.freeze({...p,rgb:Object.freeze(p.rgb),roi:Object.freeze(p.roi)})))});
+ const config=Object.freeze({id:'dpd-original-liquid-3point-20261111',calibrated:false,method:'normalized-sRGB-piecewise-projection',maxRGBDistance:12,references:Object.freeze([{"value": 0.2, "rgb": [223, 183, 190], "roi": {"x": 693, "y": 741, "w": 73, "h": 73}, "saturated": 0, "source": "IMG_3868.JPG"}, {"value": 0.6, "rgb": [231, 134, 168], "roi": {"x": 707, "y": 649, "w": 118, "h": 118}, "saturated": 0.012640045963803505, "source": "IMG_3867.JPG"}, {"value": 2.0, "rgb": [246, 100, 118], "roi": {"x": 717, "y": 669, "w": 101, "h": 101}, "saturated": 0.12783060484266248, "source": "IMG_3866.JPG"}].map(p=>Object.freeze({...p,rgb:Object.freeze(p.rgb),roi:Object.freeze(p.roi)})))});
  const feature=rgb=>rgb.map(v=>v/Math.max(...rgb)*255);
  function estimate(rgb,model=config){
   const invalid={value:null,status:'invalid',distance:null};

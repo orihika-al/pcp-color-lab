@@ -4,11 +4,11 @@ button.addEventListener('click',async()=>{
  button.disabled=true;status.textContent='最新の画面を読み込んでいます…';
  try{
   if(!navigator.onLine)throw new Error('ネットに接続してから、もう一度お試しください。');
-  const base=new URL('./',location.href),target=new URL('./',base);target.searchParams.set('v','pcp-github-v7-liquid3-r1');
+  const base=new URL('./',location.href),target=new URL('./',base);target.searchParams.set('v','pcp-github-v8-original3');
   // Probe a distinct static filename: old navigation handlers cannot substitute the shell.
   const probe=new URL('index.html',base);probe.searchParams.set('check',String(Date.now()));
   const response=await fetch(probe,{cache:'no-store'});const html=await response.text();
-  if(!response.ok||!html.includes('pcp-github-v7-liquid3-r1'))throw new Error('公開版の更新準備中です。少し待ってから再度お試しください。');
+  if(!response.ok||!html.includes('pcp-github-v8-original3'))throw new Error('公開版の更新準備中です。少し待ってから再度お試しください。');
   if('serviceWorker' in navigator){const reg=await navigator.serviceWorker.getRegistration(base.href);if(reg&&reg.scope===base.href)await reg.unregister();}
   if('caches' in window)await Promise.all((await caches.keys()).filter(k=>k.startsWith('pcp-color-lab-')).map(k=>caches.delete(k)));
   status.textContent='更新完了。新しい画面を開きます。';const link=document.getElementById('open');link.href=target.href;link.hidden=false;location.replace(target.href);
